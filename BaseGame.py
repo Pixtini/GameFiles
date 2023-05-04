@@ -137,7 +137,8 @@ def super_scatter(reels):
     selected = np.random.choice(scatter_table['supers'],1 ,p = scatter_table['prob'], replace= False )[0]
     if selected == 1:
         reels[2][reels[2].index("Scatter")] = "SuperScatter"
-    accumulated[5] += 1
+        accumulated[5] += 1
+        accumulated[2] -= 1
     return reels
 
 # Prints the arrays into an easier to understand format
