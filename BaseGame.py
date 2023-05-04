@@ -11,9 +11,9 @@ warnings.filterwarnings('ignore')
 # Config, reads from config.xlsx file and puts it into array 
 config = "/Users/connorkelly/Documents/Work/PythonWorkspace/BaseMirrorBonuses/config.xlsx"
 n_mirror_table = pd.read_excel(config, 'data', usecols=[0,1])
-bonus_table = pd.read_excel('config.xlsx', 'data', nrows = 5, usecols=[3,4])
+bonus_table = pd.read_excel(config, 'data', nrows = 5, usecols=[3,4])
 stored = bonus_table.bweights
-bonus_table_inital = pd.read_excel('config.xlsx', 'data', nrows = 5, usecols=[6,7])
+bonus_table_inital = pd.read_excel(config, 'data', nrows = 5, usecols=[6,7])
 results_file = open("DracsStacksResults"+str(date.today())+str(st)+".txt", "w")
 
 # Globals
@@ -50,12 +50,18 @@ def bonus_choice(scatter_count, mirror_count, collect_count, transform_count, ne
             transform_count += 1
         if selected == 4:
             collect_count += 1
-
     return bonuses
 
 # Function picks a random reel based on if the reel is full or not
-def reel_selector(reels):
-    weights = [1,1,1,1,1] #Uniformly distrubuted across the reels
+def reel_selector(reels, scatter):
+    if scatter:
+        weights = [0,1,1,1,0]
+        for i, reel in enumerate(reels):
+            if "Scatter" in reel:
+                weights[i] = 0
+    else:
+        weights = [1,1,1,1,1]
+    #Uniformly distrubuted across the reels
     for i, reel in enumerate(reels): #Sets the full reels weights to zero
         if len(reel) == 6:
             weights[i] = 0      
@@ -75,20 +81,25 @@ def bonus_counter(reels):
         for j, symbol in enumerate(reel): # Sums the collected coins 
             if symbol not in mirror_type:
                 counts[6] += int(reel[j])
-
     return counts
 
 # transform assesses the transform bonuses by adding additional mirrors to one reel and rerolling the transform
 def transform(reels):
     global accumulated
     transform_loc = [(i,j)for i in [0,1,2,3,4] for j in reels[i] if j == "Transform"] # Find the locations of transform in the array
-    transform_reel = int(random.choice(reel_selector(reels))) # Selects a non-full reel to transform at random
+    transform_reel = int(random.choice(reel_selector(reels,False))) # Selects a non-full reel to transform at random
     for j in range(6 - int(len(reels[transform_reel]))): # Fills the reel with Bonuses
         counts = bonus_counter(reels)
-        reels[transform_reel].append(bonus_choice(counts[2],sum(counts),counts[4],counts[3],1,False,reels)[0])
+        if (transform_reel == 1 or transform_reel == 2 or transform_reel == 3) and "Scatter" not in reels[transform_reel]:
+            reels[transform_reel].append(bonus_choice(counts[2],sum(counts),counts[4],counts[3],1,False,reels)[0])
+        else:
+            reels[transform_reel].append(bonus_choice(3,sum(counts),counts[4],counts[3],1,False,reels)[0])
     accumulated[3] += 1 
     counts = bonus_counter(reels) # Re-roll the Transform Symbol
-    reels[transform_loc[0][0]][reels[transform_loc[0][0]].index("Transform")] = bonus_choice(counts[2],sum(counts),counts[4],counts[3],1,False,reels)[0]
+    if (transform_loc[0][0] == 1 or transform_loc[0][0] == 2 or transform_loc[0][0] == 3) and "Scatter" not in reels[transform_loc[0][0]]:
+        reels[transform_loc[0][0]][reels[transform_loc[0][0]].index("Transform")] = bonus_choice(counts[2],sum(counts),counts[4],counts[3],1,False,reels)[0]
+    else:
+        reels[transform_loc[0][0]][reels[transform_loc[0][0]].index("Transform")] = bonus_choice(3,sum(counts),counts[4],counts[3],1,False,reels)[0]
     return reels
 
 # multiplier assesses the multiplier bonueses by adding them to an accumlated pool and rereolling the multiplier
@@ -98,7 +109,10 @@ def multiplier(reels):
     for i, locations in enumerate(multiplier_loc): # Re-roll the Multiplier Symbols and increments the accumlated array
         accumulated[1] += 1
         counts = bonus_counter(reels)
-        reels[multiplier_loc[i][0]][reels[multiplier_loc[i][0]].index("Multiplier")] = bonus_choice(counts[2],sum(counts),counts[4],counts[3],1,False,reels)[0]
+        if (multiplier_loc[i][0] == 1 or multiplier_loc[i][0] == 2 or multiplier_loc[i][0] == 3) and "Scatter" not in reels[multiplier_loc[i][0]]:
+            reels[multiplier_loc[i][0]][reels[multiplier_loc[i][0]].index("Multiplier")] = bonus_choice(counts[2],sum(counts),counts[4],counts[3],1,False,reels)[0]
+        else:
+            reels[multiplier_loc[i][0]][reels[multiplier_loc[i][0]].index("Multiplier")] = bonus_choice(3,sum(counts),counts[4],counts[3],1,False,reels)[0]
     return reels
 
 # collect assesses the collects by adding all the coins visible and giving said collect that value and rerolling all coins
@@ -110,12 +124,15 @@ def collect(reels):
     reels[collect_loc[0][0]][reels[collect_loc[0][0]].index("Collect")] = len(coin_loc) # Sets Collect to the number of Coins on the reels
     for i, locations in enumerate(coin_loc): # Re-roll the Coin Symbols
         counts = bonus_counter(reels)
-        reels[coin_loc[i][0]][reels[coin_loc[i][0]].index("Coin")] = bonus_choice(counts[2],sum(counts),counts[4],counts[3],1,False,reels)[0]    
+        if (coin_loc[i][0] == 1 or coin_loc[i][0] == 2 or coin_loc[i][0] == 3) and "Scatter" not in reels[coin_loc[i][0]]:
+            reels[coin_loc[i][0]][reels[coin_loc[i][0]].index("Coin")] = bonus_choice(counts[2],sum(counts),counts[4],counts[3],1,False,reels)[0]
+        else:
+             reels[coin_loc[i][0]][reels[coin_loc[i][0]].index("Coin")] = bonus_choice(3,sum(counts),counts[4],counts[3],1,False,reels)[0]
     return reels
 
 def super_scatter(reels):
     global accumulated
-    scatter_table = pd.read_excel('config.xlsx', 'data', nrows = 2, usecols=[15,16])
+    scatter_table = pd.read_excel(config, 'data', nrows = 2, usecols=[15,16])
     scatter_table['prob'] = (scatter_table.fweights)/(scatter_table.fweights.sum())
     selected = np.random.choice(scatter_table['supers'],1 ,p = scatter_table['prob'], replace= False )[0]
     if selected == 1:
@@ -136,8 +153,12 @@ def bonus_assessment():
     n_mirror_table['prob'] = (n_mirror_table.weights)/(n_mirror_table.weights.sum()) # Selects an starting Choice of Mirrors at random and intialises that many onto the reels
     inital_mirror_choice = np.random.choice(n_mirror_table['n_mirrors'], 1 ,p = n_mirror_table['prob'], replace = False)[0]
     mirrors = bonus_choice(0,inital_mirror_choice,0,0,inital_mirror_choice-1,True,reels)
-    for mirror in mirrors: # Assigns the 
-        reels[int(random.choice(reel_selector(reels)))].append(mirror)
+    scatter_count = mirrors.count("Scatter")
+    for i in range(scatter_count):
+        reels[int(random.choice(reel_selector(reels,True)))].append("Scatter")
+        mirrors.remove("Scatter")
+    for mirror in mirrors: # Assigns the mirrors
+        reels[int(random.choice(reel_selector(reels,False)))].append(mirror)
     #Sums Multipliers, preforms the Transforms then Collects until no more appear on reels
     while "Multiplier" in list(itertools.chain(*reels)) or "Transform" in list(itertools.chain(*reels)):
         reels = multiplier(reels)
@@ -152,13 +173,13 @@ def bonus_assessment():
     final_mirror_count = np.count_nonzero(np.asarray(list(itertools.chain(*reels))))
 
 def coin_value_picker(): # Selects and returns a random coin value
-    coin_table = pd.read_excel('config.xlsx', 'data', nrows = 12, usecols=[9,10])
+    coin_table = pd.read_excel(config, 'data', nrows = 12, usecols=[9,10])
     coin_table['prob'] = (coin_table.dweights)/(coin_table.dweights.sum())
     selected = np.random.choice(coin_table['coin'],1 ,p = coin_table['prob'], replace= False )[0]
     return selected
 
 def multiplier_value_picker(): # Selects and returns a random multiplier value
-    multiplier_table = pd.read_excel('config.xlsx', 'data', nrows = 4, usecols=[12,13])
+    multiplier_table = pd.read_excel(config, 'data', nrows = 4, usecols=[12,13])
     multiplier_table['prob'] = (multiplier_table.eweights)/(multiplier_table.eweights.sum())
     selected = np.random.choice(multiplier_table['multiplier'],1 ,p = multiplier_table['prob'], replace= False )[0]
     return selected
@@ -186,32 +207,30 @@ def main(sim_flag,coin_e,multiplier_e):
 
 def simulation(trials):
     global accumulated
-    coin_table = pd.read_excel('config.xlsx', 'data', nrows = 12, usecols=[9,10]) # Figure out expected value of coins
+    coin_table = pd.read_excel(config, 'data', nrows = 12, usecols=[9,10]) # Figure out expected value of coins
     coin_table['prob'] = (coin_table.dweights)/(coin_table.dweights.sum())
     coin_table['expected'] = coin_table.coin*coin_table.prob
     coin_e = coin_table['expected'].sum()
 
-    multiplier_table = pd.read_excel('config.xlsx', 'data', nrows = 4, usecols=[12,13]) # Figure out expected value of mulitpliers
+    multiplier_table = pd.read_excel(config, 'data', nrows = 4, usecols=[12,13]) # Figure out expected value of mulitpliers
     multiplier_table['prob'] = (multiplier_table.eweights)/(multiplier_table.eweights.sum())
     multiplier_table['expected'] = multiplier_table.multiplier*multiplier_table.prob
     multiplier_e = multiplier_table['expected'].sum()
 
     results_file.write(f"Trials\t{trials}\nCoin Expected Value \t {coin_e} \nMultiplier Expected Value \t {multiplier_e} \n\n")
     results_file.write(f"Return\t{mirror_type[0]}\t{mirror_type[1]}\t{mirror_type[2]}\t{mirror_type[3]}\t{mirror_type[4]}\t{mirror_type[5]}\tStarting Mirrors\tEnd Mirrors\n")
-
+    interval = 1000
     results = [0,0]
     for i in range(trials):
         result = main(True,coin_e,multiplier_e)
         results[0] += result[0]
         results[1] += result[1]
         accumulated = [0,0,0,0,0,0]
-        if i%100 == 0:
-            print(f"progress {time.time()-st} , {i//10000}/{trials//10000} ")
-    
-
+        if i%interval == 0:
+            print(f"progress {time.time()-st} , {i//interval}/{trials//interval} ")
     print(f"For {trials} Trials - \n Average Pay: {results[0]/trials} \n Average Scatters: {results[1]/trials}")
 
-simulation(1000000)
+simulation(100000)
 et = time.time()
 print(f"Execution time = {et-st} Seconds")
 
