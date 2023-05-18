@@ -21,22 +21,14 @@ def reel_selector(reels):
     for i, reel in enumerate(reels): #Sets the full reels weights to zero
         if "Symbol" not in reel:
             weights[i] = 0      
-    selectionpool = []
-    for i, x in enumerate(weights): # Generates a pool of indicies based on weights to random.choice later
-        for j in range(x):
-            selectionpool.append(str(i))
-    return selectionpool
+    return gmf.selection(weights)
 
 def sym_selector(reel):
     weights = [1,1,1,1] #Uniformly distrubuted across the reel
     for i, symbol in enumerate(reel): #Sets the full reels weights to zero
         if symbol != "Symbol":
             weights[i] = 0      
-    selectionpool = []
-    for i, x in enumerate(weights): # Generates a pool of indicies based on weights to random.choice later
-        for j in range(x):
-            selectionpool.append(str(i))
-    return selectionpool
+    return gmf.selection(weights)
 
 def rabbit_placement(reels):
     config = "/Users/connorkelly/Documents/Work/Games/Zombie Rabbits/Zombie Rabbits Config.xlsx"
