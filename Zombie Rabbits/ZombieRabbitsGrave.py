@@ -1,17 +1,7 @@
-import random
-import pandas as pd
-import numpy as np
-import itertools
-import warnings
-import time
-from datetime import date
+import random, time , pandas as pd, itertools, warnings, numpy as np, datetime
+import GMF as gmf
 st = time.time()
 warnings.filterwarnings('ignore')
-
-def print_reels(reels):
-    for i, reel in enumerate(reels):
-        print(str(reel))
-    print("\n")
 
 def grave_placement(reels):
     reels[random.randint(0,5)][random.randint(0,3)] = "Grave"
@@ -61,7 +51,6 @@ def rabbit_placement(reels):
             pos = int(random.choice(sym_selector(reels[reel])))
             reels[reel][pos] = rabbit
 
-
 def TW1():
     pass
 
@@ -83,7 +72,7 @@ def bonus_counter(reels):
         counts[j] += 4 - reel.count("Symbol") - reel.count("Grave")
         total_count += counts[j]
 
-def main(reels):
+def main():
     global counts
     counts = [0 for i in range(6)]
     total = 10**0
@@ -92,10 +81,9 @@ def main(reels):
         reels = [["Symbol","Symbol","Symbol","Symbol"] for i in range(6)]
         rabbit_placement(reels)
         bonus_counter(reels)
-        print_reels(reels)
+        gmf.print_reels(reels)
         if i%interval == 0:
             print(f"{i//interval}/{total//interval} + {counts}")
     print(f"{total_count} + {total} Graves")
-    
-reels = [["Symbol","Symbol","Symbol","Symbol"] for i in range(6)]
-main(reels)
+
+main()
