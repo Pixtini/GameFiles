@@ -61,27 +61,24 @@ def expand(reels):
                 reels[i].insert(j+1,"Symbol")              
     return reels
 
-def bonus_counter(reels):
+def counter(reels):
     global counts, total_count, total_bonuses
     total_count = 0
-    bonuses = ["Wild", "Expand", "TW1", "TW2"]
     for j, reel in enumerate(reels): # Checks each reels for each Bonus
         counts[j] += 4 - reel.count("Symbol") - reel.count("Grave")
         total_count += counts[j]
-    for i, bonus in enumerate(bonuses):
-        for j, reel in enumerate(reels):
-            total_bonuses[i] += reel.count(bonus)
+    total_bonuses = gmf.bonus_counter(reel, ["Wild", "Expand", "TW1", "TW2"])
     
 def main():
     global counts, total_bonuses
     counts, total_bonuses = [0 for i in range(6)], [0 for i in range(4)]
-    total = 10**0
-    interval = total
+    total = 10**1
+    interval = total//10
     for i in range(total):
         reels = [["Symbol","Symbol","Symbol","Symbol"] for i in range(6)]
         rabbit_placement(reels)
-        bonus_counter(reels)
         full_moon(reels)
+        counter(reels)
         gmf.print_reels(reels)
         if i%interval == 0:
             print(f"{i//interval}/{total//interval} + {counts} + {total_bonuses}")
