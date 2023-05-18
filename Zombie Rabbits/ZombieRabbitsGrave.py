@@ -2,6 +2,7 @@ import random, time , pandas as pd, itertools, warnings, numpy as np, datetime
 import GMF as gmf
 st = time.time()
 warnings.filterwarnings('ignore')
+config = "/Users/connorkelly/Documents/Work/Games/Zombie Rabbits/Zombie Rabbits Config.xlsx"
 
 def grave_placement(reels):
     reels[random.randint(0,5)][random.randint(0,3)] = "Grave"
@@ -10,11 +11,15 @@ def grave_placement(reels):
 def rabbit_num():
     return random.randint(2,24)
 
-def full_moon():
-    config = "/Users/connorkelly/Documents/Work/Games/Zombie Rabbits/Zombie Rabbits Config.xlsx"
+def full_moon(reels):
     full_moon_table = pd.read_excel(config, 'data', nrows = 2, usecols=[3,4])
     full_moon_table['prob'] = (full_moon_table.BWeights)/(full_moon_table.BWeights.sum())
-    return np.random.choice(full_moon_table['FullMoon'],1 ,p = full_moon_table['prob'], replace= False )[0] 
+    if np.random.choice(full_moon_table['FullMoon'],1 ,p = full_moon_table['prob'], replace= False )[0]:
+        for i, reel in enumerate(reels):
+            for j, symbol in enumerate(reel):
+                if symbol == 'TW1':
+                    reels[i][j] = "TW2"
+    return reels       
 
 def reel_selector(reels):
     weights = [1,1,1,1,1,1] #Uniformly distrubuted across the reels
@@ -31,7 +36,6 @@ def sym_selector(reel):
     return gmf.selection(weights)
 
 def rabbit_placement(reels):
-    config = "/Users/connorkelly/Documents/Work/Games/Zombie Rabbits/Zombie Rabbits Config.xlsx"
     bonus_table = pd.read_excel(config, 'data', usecols=[0,1])
     bonus_table['prob'] = (bonus_table.Weights)/(bonus_table.Weights.sum())
     rabbits = np.random.choice(bonus_table['Bonus'],rabbit_num() ,p = bonus_table['prob'], replace= True )
@@ -58,24 +62,29 @@ def expand(reels):
     return reels
 
 def bonus_counter(reels):
-    global counts, total_count
+    global counts, total_count, total_bonuses
     total_count = 0
+    bonuses = ["Wild", "Expand", "TW1", "TW2"]
     for j, reel in enumerate(reels): # Checks each reels for each Bonus
         counts[j] += 4 - reel.count("Symbol") - reel.count("Grave")
         total_count += counts[j]
-
+    for i, bonus in enumerate(bonuses):
+        for j, reel in enumerate(reels):
+            total_bonuses[i] += reel.count(bonus)
+    
 def main():
-    global counts
-    counts = [0 for i in range(6)]
+    global counts, total_bonuses
+    counts, total_bonuses = [0 for i in range(6)], [0 for i in range(4)]
     total = 10**0
     interval = total
     for i in range(total):
         reels = [["Symbol","Symbol","Symbol","Symbol"] for i in range(6)]
         rabbit_placement(reels)
         bonus_counter(reels)
+        full_moon(reels)
         gmf.print_reels(reels)
         if i%interval == 0:
-            print(f"{i//interval}/{total//interval} + {counts}")
+            print(f"{i//interval}/{total//interval} + {counts} + {total_bonuses}")
     print(f"{total_count} + {total} Graves")
 
 main()
