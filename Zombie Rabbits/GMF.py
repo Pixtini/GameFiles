@@ -11,3 +11,10 @@ def selection(weights):
         for j in range(x):
             selectionpool.append(str(i))
     return selectionpool
+
+def bonus_counter(reels, bonuses):
+    total_bonuses = [0 for i in range(len(bonuses))]
+    for i, bonus in enumerate(bonuses):
+        for j, reel in enumerate(reels):
+            total_bonuses[i] += reel.count(bonus)
+    return total_bonuses
