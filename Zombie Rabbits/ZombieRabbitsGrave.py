@@ -9,7 +9,7 @@ def grave_placement(reels):
     return reels
 
 def rabbit_num():
-    return random.randint(2,24)
+    return random.randint(0,7)
 
 def full_moon(reels):
     full_moon_table = pd.read_excel(config, 'data', nrows = 2, usecols=[3,4])
@@ -28,24 +28,35 @@ def reel_selector(reels):
             weights[i] = 0      
     return gmf.selection(weights)
 
-def sym_selector(reel):
-    weights = [1,1,1,1] #Uniformly distrubuted across the reel
+def sym_selector(reel,isTW):
+    weights = [1 for i in range(len(reel))] #Uniformly distrubuted across the reel
     for i, symbol in enumerate(reel): #Sets the full reels weights to zero
         if symbol != "Symbol":
-            weights[i] = 0      
+            weights[i] = 0
+    if isTW:
+        weights[len(weights)-1] = 0
+
     return gmf.selection(weights)
 
 def rabbit_placement(reels):
-    bonus_table = pd.read_excel(config, 'data', usecols=[0,1])
-    bonus_table['prob'] = (bonus_table.Weights)/(bonus_table.Weights.sum())
-    rabbits = np.random.choice(bonus_table['Bonus'],rabbit_num() ,p = bonus_table['prob'], replace= True )
-    for i, rabbit in enumerate(rabbits):
-        if i == 0:
-            grave_placement(reels)
-        else:
-            reel = int(random.choice(reel_selector(reels)))
-            pos = int(random.choice(sym_selector(reels[reel])))
-            reels[reel][pos] = rabbit
+    for i, reel in enumerate(reels):
+        state = bin(rabbit_num())[2:]
+        if len(state) == 1:
+            state = "00"+state
+        if len(state) == 2:
+            state = "0" + state
+        print(state)
+
+        if state[0] == "1":
+            reel[0] = "Expand"
+            expand(reel,i)
+        if state[1] == "1":
+            reel[int(random.choice(sym_selector(reel,False)))] = "Wild"
+        if state[2] == "1":
+            reel[int(random.choice(sym_selector(reel,True)))] = "TW"
+        gmf.print_reels(reels)
+    return
+
 
 def TW1():
     pass
@@ -53,12 +64,12 @@ def TW1():
 def TW2():
     pass
 
-def expand(reels):
-    for i, reel in enumerate(reels):
-        for j, symbol in enumerate(reel):
-            if symbol == 'Expand':
-                reels[i][j] = "Symbol"
-                reels[i].insert(j+1,"Symbol")              
+def expand(reel,i):
+    print(f"expanding on reel {i}")
+    if reel[0] == 'Expand':
+        reel[0] = "Symbol"
+        for j in range(random.randint(1,4)): 
+            reels[i].insert(1,"Symbol")              
     return reels
 
 def counter(reels):
@@ -84,4 +95,5 @@ def main():
             print(f"{i//interval}/{total//interval} + {counts} + {total_bonuses}")
     print(f"{total_count} + {total} Graves")
 
-main()
+reels = [["Symbol","Symbol","Symbol","Symbol"] for i in range(6)]
+rabbit_placement(reels)
