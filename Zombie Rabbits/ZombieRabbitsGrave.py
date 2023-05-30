@@ -45,32 +45,50 @@ def rabbit_placement(reels):
             state = "00"+state
         if len(state) == 2:
             state = "0" + state
-        print(state)
 
         if state[0] == "1":
             reel[0] = "Expand"
-            expand(reel,i)
+            expand(reels,reel,i)
         if state[1] == "1":
             reel[int(random.choice(sym_selector(reel,False)))] = "Wild"
         if state[2] == "1":
-            reel[int(random.choice(sym_selector(reel,True)))] = "TW"
-        gmf.print_reels(reels)
+            reel[int(random.choice(sym_selector(reel,True)))] = "TW1"
+    #gmf.print_reels(reels)
     return
-
 
 def TW1():
     pass
 
+def TW_Count(reels):
+    counts = [[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]]
+    for i, reel in enumerate(reels):
+        for j, symbol in enumerate(reel[::-1]):
+            if symbol == "TW1":
+                counts[i][j] += 1
+
+    for k in range(len(counts)):
+        counts[k] = counts[k][::-1]
+    return counts
+
+def highest_tw(reels):
+    count = [0 for i in range(8)]
+    highest = 0
+    for i, reel in enumerate(reels):
+        if 'TW1' in reel:
+            if reel[::-1].index('TW1') > highest:
+                highest = reel[::-1].index('TW1')
+    count[highest] += 1
+    return highest
+
 def TW2():
     pass
 
-def expand(reel,i):
-    print(f"expanding on reel {i}")
+def expand(reels,reel,i):
     if reel[0] == 'Expand':
         reel[0] = "Symbol"
         for j in range(random.randint(1,4)): 
             reels[i].insert(1,"Symbol")              
-    return reels
+    return reel
 
 def counter(reels):
     global counts, total_count, total_bonuses
@@ -95,5 +113,28 @@ def main():
             print(f"{i//interval}/{total//interval} + {counts} + {total_bonuses}")
     print(f"{total_count} + {total} Graves")
 
-reels = [["Symbol","Symbol","Symbol","Symbol"] for i in range(6)]
-rabbit_placement(reels)
+def TW_sim(total):
+    total_counts = [[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]]
+    total_pos = [0,0,0,0,0,0,0,0]
+
+    interval = total//10
+
+    for i in range(total):
+        reels = [["Symbol","Symbol","Symbol","Symbol"] for j in range(6)]
+        rabbit_placement(reels)
+        temp = TW_Count(reels)
+        gmf.print_reels(reels)
+        for k, reel in enumerate(temp):
+            for l, pos in enumerate(reel):
+                total_counts[k][l] += temp[k][l]
+
+        total_pos[highest_tw(reels)] += 1
+
+        #if i%interval == 0:
+            #print(f"{i//interval}/{total//interval}")
+    gmf.print_reels(total_counts)
+    print(total_pos)
+    gmf.anyways_win_evaluation(reels,["Wild", "TW1"])
+
+TW_sim(1)
+
