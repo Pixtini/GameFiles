@@ -25,17 +25,35 @@ def symbol_counter(reels,symbol):
         counts_per_reel[y] += reel.count(symbol)
     return counts_per_reel 
 
-def anyways_win_evaluation(reels, mixed_wins):
-    check_symbols, mixed_win_symbols = {}, {}
+def anyways_win_evaluation(reels, symbols, mixed_wins):
+    check_symbols, mixed_total, wins  = {}, [0 for i in range(len(reels))], {}
+    
     for x, symbol in enumerate(mixed_wins):
-        if symbol in mixed_win_symbols:
-            continue
-        mixed_win_symbols.update({symbol:symbol_counter(reels,symbol)})
-        print(f"mixed are {mixed_win_symbols}")      
+        for i in range(len(reels)):
+            mixed_total[i] += symbol_counter(reels,symbol)[i]
 
-    for x, symbol in enumerate(reels[0]):
-        if symbol in check_symbols or symbol in mixed_win_symbols:
+    for x, symbol in enumerate(symbols):
+        if symbol in check_symbols or symbol in mixed_wins:
             continue
-        check_symbols.update({symbol:symbol_counter(reels,symbol)})
-        print(f"chck are {check_symbols}")
         
+        check_symbols.update({symbol:symbol_counter(reels,symbol)})
+        
+        for i in range(len(reels)):
+            check_symbols[symbol][i] += mixed_total[i]
+
+    for x, symbol in enumerate(check_symbols):
+        wins.update({symbol:[0 for i in range(len(reels))]})
+        for y, count in enumerate(check_symbols.get(symbol)):
+            if y == 0:
+                wins[symbol][y] = count
+            else:
+                wins[symbol][y] = wins[symbol][y-1]*count
+    
+    return wins
+
+
+
+            
+
+            
+
