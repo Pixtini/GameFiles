@@ -4,8 +4,11 @@ st = time.time()
 warnings.filterwarnings('ignore')
 config = "/Users/connorkelly/Documents/Work/Games/Zombie Rabbits/Zombie Rabbits Config.xlsx"
 
-def grave_placement(reels):
-    reels[random.randint(0,5)][random.randint(0,3)] = "Grave"
+symbol_table = pd.read_excel(config, 'reels')
+pay_symbols = list(symbol_table.iloc[:,0])
+
+def build_reels(symbol_table):
+    reels = gmf.anyways_reel_builder([4,4,4,4,4,4],6,symbol_table)
     return reels
 
 def rabbit_num():
@@ -21,17 +24,10 @@ def full_moon(reels):
                     reels[i][j] = "TW2"
     return reels       
 
-def reel_selector(reels):
-    weights = [1,1,1,1,1,1] #Uniformly distrubuted across the reels
-    for i, reel in enumerate(reels): #Sets the full reels weights to zero
-        if "Symbol" not in reel:
-            weights[i] = 0      
-    return gmf.selection(weights)
-
-def sym_selector(reel,isTW):
+def sym_selector(reel,isTW,symbols):
     weights = [1 for i in range(len(reel))] #Uniformly distrubuted across the reel
     for i, symbol in enumerate(reel): #Sets the full reels weights to zero
-        if symbol != "Symbol":
+        if symbol not in symbols:
             weights[i] = 0
     if isTW:
         weights[len(weights)-1] = 0
@@ -50,14 +46,27 @@ def rabbit_placement(reels):
             reel[0] = "Expand"
             expand(reels,reel,i)
         if state[1] == "1":
-            reel[int(random.choice(sym_selector(reel,False)))] = "Wild"
+            reel[int(random.choice(sym_selector(reel,False,pay_symbols)))] = "Wild"
         if state[2] == "1":
-            reel[int(random.choice(sym_selector(reel,True)))] = "TW1"
+            reel[int(random.choice(sym_selector(reel,True,pay_symbols)))] = "TW1"
     #gmf.print_reels(reels)
     return
 
-def TW1():
-    pass
+def TW1(reels):
+    TW1_pos, reel_leng = [], []
+    for i, reel in enumerate(reels):
+        reel_leng.append(len(reel))
+        for j, pos in enumerate(reel):
+            if pos == 'TW1':
+                TW1_pos.append((i,j))
+    
+    reels = gmf.anyways_reel_builder(reel_leng,6,symbol_table)
+    
+    for i, pos in enumerate(TW1_pos):
+        if pos[1]+1 != len(reels[pos[0]]):
+            reels[pos[0]][pos[1]+1] = "TW1"
+
+    return reels
 
 def TW_Count(reels):
     counts = [[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]]
@@ -84,10 +93,11 @@ def TW2():
     pass
 
 def expand(reels,reel,i):
+    symbol_table['prob'] = (symbol_table.iloc[:,i+1])/(symbol_table.iloc[:,i+1].sum())
     if reel[0] == 'Expand':
-        reel[0] = "Symbol"
-        for j in range(random.randint(1,4)): 
-            reels[i].insert(1,"Symbol")              
+        reel[0] = np.random.choice(symbol_table['Symbols'],1 ,p = symbol_table['prob'], replace= True )[0]
+        for j in range(random.randint(1,4)):
+            reels[i].insert(1,np.random.choice(symbol_table['Symbols'],1 ,p = symbol_table['prob'], replace= True )[0])              
     return reel
 
 def counter(reels):
@@ -97,21 +107,7 @@ def counter(reels):
         counts[j] += 4 - reel.count("Symbol") - reel.count("Grave")
         total_count += counts[j]
     total_bonuses = gmf.bonus_counter(reel, ["Wild", "Expand", "TW1", "TW2"])
-    
-def main():
-    global counts, total_bonuses
-    counts, total_bonuses = [0 for i in range(6)], [0 for i in range(4)]
-    total = 10**1
-    interval = total//10
-    for i in range(total):
-        reels = [["Symbol","Symbol","Symbol","Symbol"] for i in range(6)]
-        rabbit_placement(reels)
-        full_moon(reels)
-        counter(reels)
-        gmf.print_reels(reels)
-        if i%interval == 0:
-            print(f"{i//interval}/{total//interval} + {counts} + {total_bonuses}")
-    print(f"{total_count} + {total} Graves")
+
 
 def TW_sim(total):
     total_counts = [[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]]
@@ -120,7 +116,7 @@ def TW_sim(total):
     interval = total//10
 
     for i in range(total):
-        reels = [["Symbol","Symbol","Symbol","Symbol"] for j in range(6)]
+        reels = build_reels(symbol_table)
         rabbit_placement(reels)
         temp = TW_Count(reels)
         gmf.print_reels(reels)
@@ -134,7 +130,8 @@ def TW_sim(total):
             #print(f"{i//interval}/{total//interval}")
     gmf.print_reels(total_counts)
     print(total_pos)
-    gmf.anyways_win_evaluation(reels,["Symbol"],["Wild", "TW1"])
+    wins = gmf.anyways_win_evaluation(reels, pay_symbols,["Wild", "TW1"])
+    gmf.print_wins(wins)
+    TW1(reels)
 
 TW_sim(1)
-

@@ -5,6 +5,11 @@ def print_reels(reels):
         print(str(reel))
     print("\n")
 
+def print_wins(wins):
+    for i, win in enumerate(wins):
+        print(f"{win} : {wins.get(win)}")
+    print("\n")    
+
 def selection(weights):
     selectionpool = []
     for i, x in enumerate(weights): # Generates a pool of indicies based on weights to random.choice later
@@ -50,6 +55,13 @@ def anyways_win_evaluation(reels, symbols, mixed_wins):
                 wins[symbol][y] = wins[symbol][y-1]*count
     
     return wins
+
+def anyways_reel_builder(height, length, st):
+    reels = []
+    for i in range(1,length+1):
+        st['prob'] = (st.iloc[:,i])/(st.iloc[:,i].sum())
+        reels.append(list(np.random.choice(st['Symbols'],height[i-1] ,p = st['prob'], replace= True )))
+    return reels
 
 
 
