@@ -134,7 +134,7 @@ def TW_sim(total):
             #print(f"{i//interval}/{total//interval}")
     gmf.print_reels(total_counts)
     print(total_pos)
-    gmf.anyways_win_evaluation(reels,["Wild", "TW1"])
+    gmf.anyways_win_evaluation(reels,["Symbol"],["Wild", "TW1"])
 
 TW_sim(1)
 
