@@ -1,4 +1,4 @@
-import random, time , pandas as pd, itertools, warnings, numpy as np, datetime
+import random, time , pandas as pd, itertools, warnings, numpy as np, datetime, operator
 import GMF as gmf
 st = time.time()
 warnings.filterwarnings('ignore')
@@ -52,21 +52,20 @@ def rabbit_placement(reels):
     #gmf.print_reels(reels)
     return
 
-def TW1(reels):
-    TW1_pos, reel_leng = [], []
-    for i, reel in enumerate(reels):
-        reel_leng.append(len(reel))
-        for j, pos in enumerate(reel):
-            if pos == 'TW1':
-                TW1_pos.append((i,j))
-    
-    reels = gmf.anyways_reel_builder(reel_leng,6,symbol_table)
-    
-    for i, pos in enumerate(TW1_pos):
-        if pos[1]+1 != len(reels[pos[0]]):
-            reels[pos[0]][pos[1]+1] = "TW1"
-
-    return reels
+def TW1(reels, wins):
+    while gmf.is_in(reels, 'TW1'):
+        reels = gmf.travelling_symbols(reels, symbol_table, "TW1")
+        new_wins = gmf.anyways_win_evaluation(reels, pay_symbols,["Wild", "TW1"])
+        for x, win in enumerate(new_wins):
+            if win not in wins:
+                wins.update({win:new_wins.get(win)})
+            else:
+                wins[win] = list(map(operator.add, wins.get(win), new_wins.get(win)))
+        print("new_wins are ")
+        gmf.print_wins(new_wins)
+        gmf.print_wins(wins)
+    return wins
+        
 
 def TW_Count(reels):
     counts = [[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]]
@@ -100,15 +99,6 @@ def expand(reels,reel,i):
             reels[i].insert(1,np.random.choice(symbol_table['Symbols'],1 ,p = symbol_table['prob'], replace= True )[0])              
     return reel
 
-def counter(reels):
-    global counts, total_count, total_bonuses
-    total_count = 0
-    for j, reel in enumerate(reels): # Checks each reels for each Bonus
-        counts[j] += 4 - reel.count("Symbol") - reel.count("Grave")
-        total_count += counts[j]
-    total_bonuses = gmf.bonus_counter(reel, ["Wild", "Expand", "TW1", "TW2"])
-
-
 def TW_sim(total):
     total_counts = [[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]]
     total_pos = [0,0,0,0,0,0,0,0]
@@ -132,6 +122,10 @@ def TW_sim(total):
     print(total_pos)
     wins = gmf.anyways_win_evaluation(reels, pay_symbols,["Wild", "TW1"])
     gmf.print_wins(wins)
-    TW1(reels)
+
+    wins = TW1(reels,wins)
+
+
+
 
 TW_sim(1)
