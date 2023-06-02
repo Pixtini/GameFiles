@@ -1,4 +1,4 @@
-import random, time , pandas as pd, itertools, warnings, numpy as np, datetime 
+import random, time , pandas as pd, itertools, warnings, numpy as np, datetime, copy
 
 def print_reels(reels):
     '''
@@ -92,6 +92,26 @@ def anyways_win_evaluation(reels, symbols, mixed_wins):
             else:
                 wins[symbol][y] = wins[symbol][y-1]*count
     
+    removal = []
+    for i in range(len(mixed_total)):
+        if i == 0:
+            removal.append(mixed_total[i])
+        else:
+            removal.append(removal[i-1]*mixed_total[i])
+
+    for x, win in enumerate(wins):
+        for y, occurances in enumerate(wins.get(win)):
+            wins[win][y] -= removal[y]
+
+    for x, win in enumerate(wins):
+        for y, occurances in enumerate(wins.get(win)):
+            if y+1 == len(wins.get(win)):
+                continue
+            if wins.get(win)[y+1] != 0:
+                wins.get(win)[y] = 0
+            else:
+                continue
+
     return wins
 
 def anyways_reel_builder(height, length, st):
@@ -173,7 +193,36 @@ def travelling_symbols(reels, symbol_table, travelling_symbol):
     print_reels(reels)
     return reels
 
+def replace(reels, x, y):
+    '''
+    GAME FEATURE
 
+    Replace symbol x with symbol y
+
+    Inputs:
+        reels - the reels which the function will be performed on
+        x - what will be replaced
+        y - replaced with
+
+    Output:
+        Reels with symbol y inplaced of symbol x
+    '''
+    for i, reel in enumerate(reels):
+        for j, symbol in enumerate(reel):
+            if symbol == x:
+                reels[i][j] = y
+    return reels
+
+def payout_calc(wins, payouts):
+    for x, win in enumerate(wins):
+        for i in range(6):
+            wins[win][i] = wins[win][i]*int(payouts.iloc[x][-i-1])
+    return wins
+
+        
+
+ 
+    
             
 
             
