@@ -1,5 +1,7 @@
 import random, time , pandas as pd, itertools, warnings, numpy as np, datetime, operator, copy
 import GMF as gmf
+import ZRStats as stat
+
 st = time.time()
 warnings.filterwarnings('ignore')
 config = "/Users/connorkelly/Documents/Work/Games/Zombie Rabbits/Zombie Rabbits Config.xlsx"
@@ -46,40 +48,19 @@ def rabbit_placement(reels):
             reel[int(random.choice(sym_selector(reel,False,pay_symbols)))] = "Wild"
         if state[2] == "1":
             reel[int(random.choice(sym_selector(reel,True,pay_symbols)))] = "TW1"
-    #gmf.print_reels(reels)
     return
 
 def TW1(reels, wins):
     while gmf.is_in(reels, 'TW1'):
         reels = gmf.travelling_symbols(reels, symbol_table, "TW1")
         new_wins = gmf.anyways_win_evaluation(reels, pay_symbols,["Wild", "TW1"])
+
         for x, win in enumerate(new_wins):
             if win not in wins:
                 wins.update({win:new_wins.get(win)})
             else:
                 wins[win] = list(map(operator.add, wins.get(win), new_wins.get(win)))
     return wins      
-
-def TW_Count(reels):
-    counts = [[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]]
-    for i, reel in enumerate(reels):
-        for j, symbol in enumerate(reel[::-1]):
-            if symbol == "TW1":
-                counts[i][j] += 1
-
-    for k in range(len(counts)):
-        counts[k] = counts[k][::-1]
-    return counts
-
-def highest_tw(reels):
-    count = [0 for i in range(8)]
-    highest = 0
-    for i, reel in enumerate(reels):
-        if 'TW1' in reel:
-            if reel[::-1].index('TW1') > highest:
-                highest = reel[::-1].index('TW1')
-    count[highest] += 1
-    return highest
 
 def TW2(reels, wins):
     first_spin = True
@@ -90,16 +71,20 @@ def TW2(reels, wins):
         if first_spin:
             first_spin = False
             multipliers = TW2_multipliers(reels,[0 for i in range(6)])
-            TW2_Involvment(reels, wins, TW2_multipliers(reels,multipliers))
+            new_wins = TW2_Involvment(reels, new_wins, TW2_multipliers(reels,multipliers))
         else:
             multipliers = TW2_multipliers(reels,multipliers)
-            TW2_Involvment(reels, wins, TW2_multipliers(reels,multipliers))
+            new_wins = TW2_Involvment(reels, new_wins, TW2_multipliers(reels,multipliers))
         
         for x, win in enumerate(new_wins):
             if win not in wins:
                 wins.update({win:new_wins.get(win)})
             else:
                 wins[win] = list(map(operator.add, wins.get(win), new_wins.get(win)))
+        
+        print("Respin")
+        gmf.print_reels(reels)
+        gmf.print_wins(new_wins)
     return wins
 
 def TW2_multipliers(reels, multipliers):
@@ -110,7 +95,6 @@ def TW2_multipliers(reels, multipliers):
         multi = np.random.choice(tw_table['TW2 Multipliers'],1 ,p = tw_table['prob'], replace= True )[0]
         if multi > multipliers[pos[0]]:
             multipliers[pos[0]] = multi      
-    print(multipliers)
     return multipliers
     
 
@@ -122,20 +106,7 @@ def expand(reels, reel, i):
             reels[i].insert(1,np.random.choice(symbol_table['Symbols'],1 ,p = symbol_table['prob'], replace= True )[0])              
     return reel
 
-def tw_tracking(reels,temp):
-    total_counts = [[0,0,0,0,0,0,0,0] for i in range(6)]
-    total_pos = [0,0,0,0,0,0,0,0]    
-    for k, reel in enumerate(temp):
-        for l, pos in enumerate(reel):
-            total_counts[k][l] += temp[k][l]
-    total_pos[highest_tw(reels)] += 1
-
-def payout_calc(reels, wins, multipliers):
-    gmf.print_wins(wins)
-    
-    if gmf.is_in(reels, "TW2"):
-        wins = TW2_Involvment(reels ,wins,multipliers)
-
+def payout_calc(wins): 
     payouts = pd.read_excel(config, 'paytable')
     gmf.payout_calc(wins, payouts)
     gmf.print_wins(wins)
@@ -151,7 +122,7 @@ def popping(wins):
 
 def TW2_Involvment(reels, wins, multipliers):
     tw2_passthrough = {}
-    print(f" multipliers are {multipliers}")
+    
     for x, win in enumerate(wins):
         temp = [copy.copy(reel) for i, reel in enumerate(reels)]
         for i, reel in enumerate(temp):
@@ -191,25 +162,22 @@ def TW2_Involvment(reels, wins, multipliers):
     return wins
 
 def TW_sim(total):
-    interval = total//10
-    for i in range(total):
-        reels = build_reels(symbol_table)
-        rabbit_placement(reels)
-        
-        reels = full_moon(reels)
-        temp = TW_Count(reels)
-        gmf.print_reels(reels)
-        wins = gmf.anyways_win_evaluation(reels, pay_symbols, ["Wild", "TW1", 'TW2'])
-        popping(wins)
-        gmf.print_wins(wins)
-        multipliers = TW2_multipliers(reels,[0 for i in range(6)])
+    reels = build_reels(symbol_table)
+    rabbit_placement(reels)
+    print("first placement")
+    gmf.print_reels(reels)  
+    print("TW1 to TW2")
+    reels = full_moon(reels)
+    gmf.print_reels(reels)
 
-        payout_calc(reels, wins,TW2_multipliers(reels))
-        #tw_tracking(reels,temp)
-        #gmf.print_reels(reels)
-        #if i%interval == 0:
-            #print(f"{i//interval}/{total//interval}")
+    wins = gmf.anyways_win_evaluation(reels, pay_symbols, ["Wild", "TW1", 'TW2'])
+    gmf.print_wins(wins)
+    if gmf.is_in(reels, "TW2"):
+        TW2(reels, wins)
+    
+    "WINS AWARDED"
+    payout_calc(wins)
+
 
 TW_sim(1)    
 
-#wins = gmf.anyways_win_evaluation_with_override(reels, pay_symbols, ["Wild", "TW1", 'TW2'],3)

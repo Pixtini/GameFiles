@@ -190,7 +190,6 @@ def travelling_symbols(reels, symbol_table, travelling_symbol):
     for i, pos in enumerate(TW1_pos):
         if pos[1]+1 != len(reels[pos[0]]):
             reels[pos[0]][pos[1]+1] = travelling_symbol
-    print_reels(reels)
     return reels
 
 def replace(reels, x, y):
