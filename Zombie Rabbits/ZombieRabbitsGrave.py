@@ -63,18 +63,26 @@ def TW1(reels, wins):
     return wins      
 
 def TW2(reels, wins):
-    first_spin = True
+    multipliers = TW2_multipliers(reels,[0 for i in range(6)])
+    new_wins = TW2_Involvment(reels, wins, TW2_multipliers(reels,multipliers))
+
+    for x, win in enumerate(new_wins):
+        if win not in wins:
+            wins.update({win:new_wins.get(win)})
+        else:
+            wins[win] = list(map(operator.add, wins.get(win), new_wins.get(win)))
+
+    print("First Pass")
+    gmf.print_reels(reels)
+    gmf.print_wins(new_wins)
+    print(multipliers)
+
     while gmf.is_in(reels, 'TW2'):
         reels = gmf.travelling_symbols(reels, symbol_table, "TW2")
         new_wins = gmf.anyways_win_evaluation(reels, pay_symbols,["Wild", "TW1", "TW2"])
 
-        if first_spin:
-            first_spin = False
-            multipliers = TW2_multipliers(reels,[0 for i in range(6)])
-            new_wins = TW2_Involvment(reels, new_wins, TW2_multipliers(reels,multipliers))
-        else:
-            multipliers = TW2_multipliers(reels,multipliers)
-            new_wins = TW2_Involvment(reels, new_wins, TW2_multipliers(reels,multipliers))
+        multipliers = TW2_multipliers(reels,multipliers)
+        new_wins = TW2_Involvment(reels, new_wins, TW2_multipliers(reels,multipliers))
         
         for x, win in enumerate(new_wins):
             if win not in wins:
@@ -85,6 +93,7 @@ def TW2(reels, wins):
         print("Respin")
         gmf.print_reels(reels)
         gmf.print_wins(new_wins)
+        print(multipliers)
     return wins
 
 def TW2_multipliers(reels, multipliers):
@@ -146,7 +155,7 @@ def TW2_Involvment(reels, wins, multipliers):
             combos.remove(combo)
         
         tw2_passthrough.update({win:combos})
-        
+
         additional_wins = []
         for z, combo in enumerate(tw2_passthrough.get(win)):
             additional_wins.append(0)
@@ -158,26 +167,38 @@ def TW2_Involvment(reels, wins, multipliers):
         for y, occur in enumerate(wins.get(win)):
             if occur != 0:
                 wins[win][y] += sum(additional_wins)
-
+    
+    print(f"TW Passthrough")
+    gmf.print_wins(tw2_passthrough)
     return wins
 
 def TW_sim(total):
     reels = build_reels(symbol_table)
     rabbit_placement(reels)
+    
     print("first placement")
     gmf.print_reels(reels)  
+    
     print("TW1 to TW2")
     reels = full_moon(reels)
     gmf.print_reels(reels)
 
     wins = gmf.anyways_win_evaluation(reels, pay_symbols, ["Wild", "TW1", 'TW2'])
     gmf.print_wins(wins)
+    
     if gmf.is_in(reels, "TW2"):
         TW2(reels, wins)
     
-    "WINS AWARDED"
+    print("WINS AWARDED")
     payout_calc(wins)
 
 
-TW_sim(1)    
+def set_one():
+    reels = build_reels(symbol_table)
+    gmf.print_reels(reels)
+    wins = gmf.anyways_win_evaluation(reels, pay_symbols, ["Wild", "TW1", 'TW2'])
+    scatters = gmf.symbol_count(reels,"SC1")
+    payout_calc(wins)
+    print(scatters)
 
+set_one()
