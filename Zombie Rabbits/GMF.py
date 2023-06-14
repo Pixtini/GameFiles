@@ -114,6 +114,24 @@ def anyways_win_evaluation(reels, symbols, mixed_wins):
 
     return wins
 
+def symbol_count(reels, symbol):
+    '''
+    GAME FUNCTION
+
+    Checks the reels for any scatters and returns the count
+
+    Input:
+        reels: the reels that will be checked for the scatters
+        scatters: all regular symbols that will be checked agaisnt
+    
+    Output:
+        A dictionary that gives each symbol with an array of the length of how many reels there are with the number of occurances up til that reel
+    '''
+    count = 0 
+    for x , reel in enumerate(reels):
+        count += reel.count(symbol)
+    return count
+
 def anyways_reel_builder(height, length, st):
     '''
     GAME FUNCTION
@@ -213,6 +231,18 @@ def replace(reels, x, y):
     return reels
 
 def payout_calc(wins, payouts):
+    '''
+    SIM Feature
+
+    Multiply Wins by Payouts
+
+    Inputs:
+        wins - number of wins
+        payouts - payouts for each symbol
+
+    Output:
+        Return of the wins
+    '''
     for x, win in enumerate(wins):
         for i in range(6):
             wins[win][i] = wins[win][i]*int(payouts.iloc[x][-i-1])
