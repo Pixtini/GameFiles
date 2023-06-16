@@ -248,7 +248,9 @@ def payout_calc(wins, payouts):
             wins[win][i] = wins[win][i]*int(payouts.iloc[x][-i-1])
     return wins
 
-        
+def winlines(winline_table):
+    winlines = [list(winline_table.iloc[i]) for i in range(len(list(winline_table.iloc[:,0])))]
+    return winlines
 
  
     
