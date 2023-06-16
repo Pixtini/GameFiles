@@ -172,6 +172,7 @@ def bonus_assessment():
     accumulated[0] = bonus_counter(reels)[0]+bonus_counter(reels)[6]
     accumulated[2] = bonus_counter(reels)[2]
     final_mirror_count = np.count_nonzero(np.asarray(list(itertools.chain(*reels))))
+    print(reels)
 
 def coin_value_picker(): # Selects and returns a random coin value
     coin_table = pd.read_excel(config, 'data', nrows = 12, usecols=[9,10])
@@ -231,7 +232,7 @@ def simulation(trials):
             print(f"progress {time.time()-st} , {i//interval}/{trials//interval} ")
     print(f"For {trials} Trials - \n Average Pay: {results[0]/trials} \n Average Scatters: {results[1]/trials}")
 
-simulation(100000)
+simulation(1)
 et = time.time()
 print(f"Execution time = {et-st} Seconds")
 
