@@ -1,4 +1,5 @@
 import random, time , pandas as pd, itertools, warnings, numpy as np, datetime, copy
+test_reels = [['Coin', 'Coin', 'Coin', 'Coin'], [], ['Transform', 'Coin'], ['Coin', 'Coin', 'Coin', 'Coin'], ['Coin']]
 
 def print_reels(reels):
     '''
@@ -248,10 +249,29 @@ def payout_calc(wins, payouts):
             wins[win][i] = wins[win][i]*int(payouts.iloc[x][-i-1])
     return wins
 
-        
+def transform_reel(reels, transformed_into):
+    '''
+    Game Feature
 
+    Transforms a reel into another symbol
+
+    Inputs:
+        reels - Game Reels
+        transformed_into - What the symbols will be transformed into upon completion
+    Output:
+        Reels with one reel transformed
+    '''
+    transform_loc = position_finder(reels, "Transform")[0][0]
+    weights = [1 for i in range(len(reels))]
+    weights[transform_loc] = 0
+    transform_reel = int(random.choice(selection(weights))) 
+
+    for x, symbol in enumerate(reels[transform_reel]):
+        reels[transform_reel][x] = transformed_into
+
+    return reels
  
-    
+
             
 
             
